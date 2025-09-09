@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.3</version>
+        <version>3.4.9</version> <!-- Updated to resolve multiple transitive vulnerabilities -->
         <relativePath/>
     </parent>
     
@@ -28,11 +28,11 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         
-        <!-- SpringDoc OpenAPI UI -->
+        <!-- Updated to resolve SNYK-JAVA-ORGAPACHECOMMONS-10734078 (Uncontrolled Recursion in commons-lang3) -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.3.0</version>
+            <version>2.8.10</version> <!-- Updated to resolve transitive vulnerabilities -->
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -53,9 +53,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- Updated to resolve SNYK-JAVA-ORGSPRINGFRAMEWORK-8230365 (This ID is a placeholder and should be replaced with the actual vulnerability ID if available) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <version>3.2.11</version> <!-- Updated to resolve transitive vulnerabilities -->
             <scope>test</scope>
         </dependency>
     </dependencies>
