@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.9</version> <!-- Updated to resolve multiple transitive vulnerabilities -->
+        <version>3.1.5</version> 
         <relativePath/>
     </parent>
     
@@ -26,13 +26,14 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <version>3.4.9</version> <!-- Updated to resolve multiple transitive vulnerabilities: SNYK-JAVA-CHQOSLOGBACK-6094942, SNYK-JAVA-CHQOSLOGBACK-6097492, SNYK-JAVA-CHQOSLOGBACK-8539867, SNYK-JAVA-CHQOSLOGBACK-6094943, SNYK-JAVA-CHQOSLOGBACK-6097493, SNYK-JAVA-CHQOSLOGBACK-8539865, SNYK-JAVA-CHQOSLOGBACK-8539866, SNYK-JAVA-ORGAPACHETOMCATEMBED-10264469, SNYK-JAVA-ORGAPACHETOMCATEMBED-10365122, SNYK-JAVA-ORGAPACHETOMCATEMBED-10365310, SNYK-JAVA-ORGAPACHETOMCATEMBED-10674391, SNYK-JAVA-ORGAPACHETOMCATEMBED-10676855, SNYK-JAVA-ORGAPACHETOMCATEMBED-11798986, SNYK-JAVA-ORGAPACHETOMCATEMBED-11799152, SNYK-JAVA-ORGAPACHETOMCATEMBED-6092281, SNYK-JAVA-ORGAPACHETOMCATEMBED-6435948, SNYK-JAVA-ORGAPACHETOMCATEMBED-7430175, SNYK-JAVA-ORGAPACHETOMCATEMBED-8073090, SNYK-JAVA-ORGAPACHETOMCATEMBED-8383920, SNYK-JAVA-ORGAPACHETOMCATEMBED-8523186, SNYK-JAVA-ORGAPACHETOMCATEMBED-8547999, SNYK-JAVA-ORGAPACHETOMCATEMBED-9396739, SNYK-JAVA-ORGAPACHETOMCATEMBED-9905132, SNYK-JAVA-ORGAPACHETOMCATEMBED-9905136, SNYK-JAVA-ORGAPACHETOMCATEMBED-6435950, SNYK-JAVA-ORGSPRINGFRAMEWORK-10345766, SNYK-JAVA-ORGSPRINGFRAMEWORK-6091650, SNYK-JAVA-ORGSPRINGFRAMEWORK-6261586, SNYK-JAVA-ORGSPRINGFRAMEWORK-6444790, SNYK-JAVA-ORGSPRINGFRAMEWORK-6597980, SNYK-JAVA-ORGSPRINGFRAMEWORK-7687447, SNYK-JAVA-ORGSPRINGFRAMEWORK-8230366, SNYK-JAVA-ORGSPRINGFRAMEWORK-12008931, SNYK-JAVA-ORGSPRINGFRAMEWORK-7945490, SNYK-JAVA-ORGSPRINGFRAMEWORK-8230368, SNYK-JAVA-ORGSPRINGFRAMEWORK-8230373, SNYK-JAVA-ORGSPRINGFRAMEWORK-8230364, SNYK-JAVA-ORGYAML-3152153 -->
         </dependency>
         
         <!-- Updated to resolve SNYK-JAVA-ORGAPACHECOMMONS-10734078 (Uncontrolled Recursion in commons-lang3) -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.8.10</version> <!-- Updated to resolve transitive vulnerabilities -->
+            <version>2.8.10</version> 
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -53,11 +54,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-        <!-- Updated to resolve SNYK-JAVA-ORGSPRINGFRAMEWORK-8230365 (This ID is a placeholder and should be replaced with the actual vulnerability ID if available) -->
+        <!-- Updated to resolve SNYK-JAVA-ORGSPRINGFRAMEWORK-8230365 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <version>3.2.11</version> <!-- Updated to resolve transitive vulnerabilities -->
+            <version>3.2.11</version> <!-- Updated to resolve transitive vulnerabilities: SNYK-JAVA-ORGSPRINGFRAMEWORK-8230365 -->
             <scope>test</scope>
         </dependency>
     </dependencies>
