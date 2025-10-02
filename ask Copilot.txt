@@ -1,3 +1,18 @@
+To scan vulnerabilities:
 @snyk-server checkVulnerabilities {
   "repoPath": "./"
 }
+To fix vulnerabilities only:
+@snyk-server fixVulnerabilities {
+  "repoPath": "./"
+}
+To fix and create PR:
+@snyk-server fixAndPR {
+  "repoPath": "./",
+  "baseBranch": "main",
+  "newBranch": "snyk-fix-2025-09"
+}
+Requirements
+ snyk CLI installed + snyk auth done
+ gh CLI installed + gh auth login done
+ GitHub repo with correct origin remote
