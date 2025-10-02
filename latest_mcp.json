@@ -143,6 +143,24 @@
   }
 }
 
+/springboot-snyk-fix.run
+repo_path=/Users/me/projects/my-repo
+base_branch=main
+new_branch=fix/snyk-2025-10
+pr_title="Fix: Snyk vulnerabilities"
+pr_body="PR with fixes applied"
+fix_mode=fix
+mode=snyk_test,snyk_fix,pr
+Runs Snyk scan first, then applies fixes, then post-fix Maven build, then creates PR
+
+2️ Full workflow in one go
+mode=all
+
+Separate individual steps
+mode=clone_build,snyk_test
+
+
+
 
 ✅ What’s New in This Version
 
