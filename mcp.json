@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "snyk-server": {
+      "command": "node",
+      "args": ["snyk-server.js"]
+    }
+  }
+}
