@@ -16,3 +16,11 @@ Requirements
  snyk CLI installed + snyk auth done
  gh CLI installed + gh auth login done
  GitHub repo with correct origin remote
+
+
+It looks like you want to run a command to fix Snyk issues using a script or tool called "mcp" with the snyk_fix mode, targeting a specific branch. Since you are using Windows and your shell is cmd.exe, I will run the command as you provided.
+I'll execute the following command in your workspace:
+mcp run snyk_fix --mode snyk_fix --repo_path "" --branch "fix/snyk-issues" --base_branch "main"
+This will attempt to run the Snyk fix process as described. I'll proceed and report the results.
+The command you provided failed because the "mcp" tool does not recognize the "--mode" option. The output suggests that "mcp" is either an alias or script for Maven ("mvn"), and Maven does not have a "--mode" option.
+To proceed, I need clarification on what "mcp" is supposed to do in your environment. If your goal is to run Snyk to automatically fix vulnerabilities, you may want to use the Snyk CLI directly (e.g., snyk test, snyk fix) or a script that wraps these commands.
