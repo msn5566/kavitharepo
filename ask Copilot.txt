@@ -24,3 +24,11 @@ mcp run snyk_fix --mode snyk_fix --repo_path "" --branch "fix/snyk-issues" --bas
 This will attempt to run the Snyk fix process as described. I'll proceed and report the results.
 The command you provided failed because the "mcp" tool does not recognize the "--mode" option. The output suggests that "mcp" is either an alias or script for Maven ("mvn"), and Maven does not have a "--mode" option.
 To proceed, I need clarification on what "mcp" is supposed to do in your environment. If your goal is to run Snyk to automatically fix vulnerabilities, you may want to use the Snyk CLI directly (e.g., snyk test, snyk fix) or a script that wraps these commands.
+
+
+/springboot-snyk-fix.run
+repo_path=
+base_branch=main
+new_branch=fix/snyk-autofix
+mode=snyk_test
+retry_count=3
