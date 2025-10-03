@@ -1,0 +1,86 @@
+# GHCP Prompt: Automated Multi-Module Snyk Fix with Conditional PR
+
+# ==============================
+# STEP 0: Enable auto-approve for Snyk fixes
+# ==============================
+Set GHCP_AUTO_APPROVE=true
+
+# ==============================
+# STEP 1: Run Snyk test and save results
+# ==============================
+Run command:
+snyk test --json > snyk-report.json
+
+# ==============================
+# STEP 2: Parse snyk-report.json
+# ==============================
+For each vulnerability:
+    - Use "upgradePath" if available
+    - Prefer patch/minor upgrades
+    - Avoid breaking major upgrades unless required
+    - Apply upgrades to all detected pom.xml files
+    - Log each applied upgrade (dependency name, old → new, files modified)
+
+# ==============================
+# STEP 3: Apply Snyk fixes automatically
+# ==============================
+For each pom.xml file found:
+    Apply required upgrades from parsed Snyk report
+
+# ==============================
+# STEP 4: Verify build automatically
+# ==============================
+Run command:
+mvn -q -DskipTests clean install
+
+# If build fails:
+    - Revert all changes
+    - Report failed dependency
+    - Stop execution
+
+# ==============================
+# STEP 5: Generate detailed Snyk fix report
+# ==============================
+Create snyk-fix-report.md:
+    - Dependency name
+    - Old version → New version
+    - File(s) modified
+
+# ==============================
+# STEP 6: Disable auto-approve for PR creation
+# ==============================
+Set GHCP_AUTO_APPROVE=false
+Prompt: "Do you want to create a PR with the applied fixes? (yes/no)"
+
+# ==============================
+# STEP 7: If PR approved, run git commands one by one
+# ==============================
+Set variable: TIMESTAMP=$(date +%Y%m%d%H%M%S)
+Set variable: BRANCH_NAME="snyk-fixes-$TIMESTAMP"
+
+1. Create branch:
+   git checkout -b $BRANCH_NAME
+
+2. Stage all modified pom.xml files:
+   git add $(find . -name "pom.xml" -type f)
+
+3. Stage Snyk report:
+   git add snyk-fix-report.md
+
+4. Commit changes:
+   git commit -m "fix: update vulnerable dependencies based on Snyk report"
+
+5. Push branch:
+   git push origin $BRANCH_NAME
+
+6. Create PR:
+   gh pr create --title "fix: Snyk vulnerability fixes ($TIMESTAMP)" \
+                --body "<detailed PR body including upgraded dependencies>" \
+                --base main \
+                --head $BRANCH_NAME
+
+# ==============================
+# STEP 9: If PR not approved
+# ==============================
+- Keep branch local
+- Inform user: "PR creation skipped"
