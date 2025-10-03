@@ -1,19 +1,18 @@
 {
   "name": "springboot-snyk-fix",
-  "description": "MCP tool: fully automated multi-module Spring Boot workflow with IDE repo auto-detection, Snyk fix, regression, fail-safe, Maven builds, interactive PR buttons, retry, conflict detection, and automatic base branch update",
+  "description": "MCP tool: Automated Spring Boot vulnerability fixer with IDE repo auto-detection, snyk test JSON export, Copilot-driven fixes, Maven regression, and PR creation.",
   "commands": {
     "run": {
-      "description": "Run complete workflow with auto-detected repo path, pre/post Maven builds, Snyk fix, regressions, fail-safe, interactive PR buttons, retry, conflict detection, and base branch update",
+      "description": "Run Snyk test + Copilot fixes + regression + PR workflow",
       "parameters": {
-        "repo_path": { "type": "string", "description": "Path to local repo. Leave empty to auto-detect current IDE/project folder." },
-        "repo_url": { "type": "string", "description": "Git repo URL (used if repo_path is empty and cloning is needed)" },
+        "repo_path": { "type": "string", "description": "Local repo path (leave empty for IDE auto-detect)" },
+        "repo_url": { "type": "string", "description": "Git repo URL (used only if repo_path not provided)" },
         "base_branch": "string",
         "new_branch": "string",
         "pr_title": "string",
         "pr_body": "string",
-        "fix_mode": { "type": "string", "enum": ["fix","wizard"], "description": "Snyk fix mode" },
-        "mode": { "type": "string", "description": "Comma-separated modes: all, clone_build, snyk_test, snyk_fix, rebuild, pr" },
-        "retry_count": { "type": "integer", "description": "Max retries for PR creation", "default": 3 }
+        "mode": { "type": "string", "description": "Modes: all, clone_build, snyk_test, snyk_fix, rebuild, pr" },
+        "retry_count": { "type": "integer", "default": 3, "description": "Retries for PR creation" }
       },
       "run": [
         "IFS=',' read -ra MODES <<< \"{{mode}}\"",
@@ -22,162 +21,110 @@
         "",
         "# Auto-detect repo path if not provided",
         "if [ -z '{{repo_path}}' ]; then",
-        "    REPO_DIR=$(pwd)",
-        "    CLONE_NEEDED=false",
-        "    echo \"ℹ️ Repo path not provided. Using current IDE/project directory: $REPO_DIR\"",
+        "  REPO_DIR=$(pwd)",
+        "  echo \"ℹ️ Using IDE/project directory: $REPO_DIR\"",
         "else",
-        "    REPO_DIR={{repo_path}}",
-        "    CLONE_NEEDED=false",
-        "fi",
-        "",
-        "# Clone if needed",
-        "if [ \"$CLONE_NEEDED\" = true ]; then",
-        "    echo '🔹 Cloning repository...'; git clone {{repo_url}} $REPO_DIR || { echo '❌ Git clone failed'; exit 1; };",
+        "  REPO_DIR={{repo_path}}",
         "fi",
         "",
         "cd $REPO_DIR || { echo '❌ Cannot access repo'; exit 1; }",
-        "echo '🔹 Checking out base branch {{base_branch}}...'; git checkout {{base_branch}} || { echo '❌ Git checkout failed'; exit 1; }",
+        "git checkout {{base_branch}} || { echo '❌ Checkout failed'; exit 1; }",
         "",
-        "# Pre/post Maven build flag",
-        "RUN_PREPOST_BUILD=false",
-        "for M in \"${MODES[@]}\"; do if [[ $M == 'snyk_fix' || $M == 'all' ]]; then RUN_PREPOST_BUILD=true; break; fi; done",
-        "",
-        "# Execute modes",
         "for M in \"${MODES[@]}\"; do",
         "  case $M in",
+        "",
         "    clone_build)",
-        "      echo '🔹 Running initial Maven build...'; mvn clean install -DskipTests || { echo '❌ Maven build failed'; exit 1; };",
+        "      echo '🔹 Running mvn clean install before tests...'",
+        "      mvn clean install -DskipTests || { echo '❌ Build failed'; exit 1; }",
         "      ;;",
         "",
         "    snyk_test)",
-        "      if [ \"$RUN_PREPOST_BUILD\" = true ]; then echo '🔹 Maven build before Snyk test'; mvn clean install -DskipTests || { echo '❌ Maven pre-test build failed'; exit 1; }; fi",
-        "      echo '🔹 Running Snyk test...'; snyk test || { echo '⚠️ Snyk test failed'; exit 1; };",
+        "      echo '🔹 Running Snyk test and exporting JSON...'",
+        "      snyk test --json > snyk-report.json || { echo '❌ Snyk test failed'; exit 1; }",
         "      ;;",
         "",
         "    snyk_fix)",
-        "      echo '🔹 Maven build before Snyk fix'; mvn clean install -DskipTests || { echo '❌ Maven pre-fix build failed'; exit 1; }",
-        "      echo '🔹 Running Snyk fix/wizard...'",
-        "      if [ '{{fix_mode}}' = 'wizard' ]; then snyk wizard || { echo '❌ Snyk wizard failed'; exit 1; }; else snyk fix || { echo '❌ Snyk fix failed'; exit 1; }; fi",
-        "      echo '🔹 Maven build after Snyk fix'; mvn clean install -DskipTests || { echo '❌ Maven post-fix build failed'; exit 1; };",
+        "      echo '🔹 Pre-build before fix...'",
+        "      mvn clean install -DskipTests || { echo '❌ Pre-fix build failed'; exit 1; }",
         "",
-        "      # Regression iterations (2 times)",
+        "      echo '🔹 Running Snyk test (JSON export)'",
+        "      snyk test --json > snyk-report.json || { echo '❌ Snyk test failed'; exit 1; }",
+        "",
+        "      echo '🔹 Asking GitHub Copilot to fix based on snyk-report.json'",
+        "      ghcp mcp snyk-autofix snyk-report.json || { echo '❌ Copilot fix failed'; exit 1; }",
+        "",
+        "      git add .",
+        "      git commit -m \"🔧 Copilot auto-fix vulnerabilities from Snyk report\" || echo '⚠️ Nothing to commit'",
+        "",
+        "      echo '🔹 Post-build after fix...'",
+        "      mvn clean install -DskipTests || { echo '❌ Post-fix build failed'; exit 1; }",
+        "",
+        "      # Regression loop",
         "      for i in 1 2; do",
-        "        echo \"🔹 Regression check #$i\"",
-        "        mvn clean install -DskipTests || { echo '❌ Maven regression build failed'; exit 1; }",
-        "        snyk test",
+        "        echo \"🔹 Regression run #$i\"",
+        "        snyk test --json > snyk-report.json",
         "        if [ $? -ne 0 ]; then",
-        "          echo \"⚠️ Vulnerabilities found in regression #$i, applying fix...\"",
-        "          if [ '{{fix_mode}}' = 'wizard' ]; then snyk wizard || { echo '❌ Snyk wizard failed'; exit 1; }; else snyk fix || { echo '❌ Snyk fix failed'; exit 1; }; fi",
+        "          echo \"⚠️ Vulnerabilities found in regression #$i. Copilot fixing...\"",
+        "          ghcp mcp snyk-autofix snyk-report.json || { echo '❌ Copilot fix failed'; exit 1; }",
+        "          git add .",
+        "          git commit -m \"🔧 Regression fix #$i\" || echo '⚠️ Nothing to commit'",
+        "          mvn clean install -DskipTests || { echo '❌ Build failed after regression fix'; exit 1; }",
         "        else",
-        "          echo \"✅ No vulnerabilities detected in regression #$i\"; break",
+        "          echo \"✅ No vulnerabilities in regression #$i\"; break;",
         "        fi",
         "      done",
         "",
-        "      # Final fail-safe check",
-        "      echo '🔹 Final vulnerability check after regressions'",
-        "      mvn clean install -DskipTests || { echo '❌ Maven build failed'; exit 1; }",
-        "      snyk test",
-        "      if [ $? -ne 0 ]; then",
-        "        echo '⚠️ WARNING: Vulnerabilities still exist after 2 regression fixes!'",
-        "        echo '💡 Please review manually before creating a PR.'",
-        "      else",
-        "        echo '✅ All vulnerabilities fixed after regression iterations.'",
-        "      fi",
-        "",
-        "      # Interactive PR buttons with retry, conflict detection, and automatic base branch update",
-        "      if [[ ! \" ${MODES[@]} \" =~ \" pr \" ]]; then",
-        "        \"interactive_pr\": {",
-        "          \"type\": \"buttons\",",
-        "          \"prompt\": \"💡 Vulnerabilities fixed or reviewed. Do you want to create a PR?\",",
-        "          \"options\": [",
-        "            {",
-        "              \"label\": \"Create PR\",",
-        "              \"command\": [",
-        "                \"attempt=1\",",
-        "                \"success=false\",",
-        "                \"while [ $attempt -le $MAX_RETRIES ]; do\",",
-        "                \"  git checkout -b {{new_branch}} || git checkout {{new_branch}}\",",
-        "                \"  git add .\",",
-        "                \"  git commit -m '{{pr_title}}' || echo '⚠️ Nothing to commit'\",",
-        "                \"  # Automatic base branch update to reduce conflicts\",",
-        "                \"  git fetch origin\",",
-        "                \"  git merge origin/{{base_branch}} --no-commit --no-ff\",",
-        "                \"  if [ $? -ne 0 ]; then echo '⚠️ Merge conflicts detected with base branch. Please resolve manually.'; break; fi\",",
-        "                \"  git commit -m 'Merged latest {{base_branch}} before PR' || true\",",
-        "                \"  git push origin {{new_branch}} && gh pr create --title '{{pr_title}}' --body '{{pr_body}}' --base {{base_branch}} --head {{new_branch}} && success=true && break\",",
-        "                \"  echo '⚠️ Push/PR failed. Retry in $RETRY_DELAY seconds...'; sleep $RETRY_DELAY\",",
-        "                \"  attempt=$((attempt+1))\",",
-        "                \"done\",",
-        "                \"if [ \\\"$success\\\" = false ]; then echo '❌ PR creation failed after $MAX_RETRIES attempts. Please resolve conflicts manually.'; fi\"",
-        "              ]",
-        "            },",
-        "            {",
-        "              \"label\": \"Skip PR\",",
-        "              \"command\": [",
-        "                \"echo '✅ PR creation skipped by developer.'\"",
-        "              ]",
-        "            }",
-        "          ]",
-        "        }",
-        "      fi",
+        "      echo '🔹 Final Snyk check after regression'",
+        "      snyk test --json > snyk-report.json || echo '⚠️ Vulnerabilities may still exist. Manual review needed.'",
         "      ;;",
         "",
-        "    rebuild) mvn clean install -DskipTests || { echo '❌ Maven rebuild failed'; exit 1; }; ;;",
+        "    rebuild)",
+        "      mvn clean install -DskipTests || { echo '❌ Maven rebuild failed'; exit 1; }",
+        "      ;;",
+        "",
+        "    pr)",
+        "      attempt=1; success=false",
+        "      while [ $attempt -le $MAX_RETRIES ]; do",
+        "        git checkout -b {{new_branch}} || git checkout {{new_branch}}",
+        "        git add .",
+        "        git commit -m '{{pr_title}}' || echo '⚠️ Nothing to commit'",
+        "",
+        "        echo '🔹 Merging latest base branch before PR...'",
+        "        git fetch origin",
+        "        git merge origin/{{base_branch}} --no-commit --no-ff",
+        "        if [ $? -ne 0 ]; then echo '❌ Merge conflicts. Resolve manually.'; break; fi",
+        "        git commit -m 'Merge latest {{base_branch}} before PR' || true",
+        "",
+        "        git push origin {{new_branch}} && gh pr create --title '{{pr_title}}' --body '{{pr_body}}' --base {{base_branch}} --head {{new_branch}} && success=true && break",
+        "",
+        "        echo \"⚠️ PR failed. Retrying in $RETRY_DELAY sec...\"; sleep $RETRY_DELAY",
+        "        attempt=$((attempt+1))",
+        "      done",
+        "      if [ \"$success\" = false ]; then echo '❌ PR creation failed after retries.'; fi",
+        "      ;;",
         "",
         "    all)",
-        "      mvn clean install -DskipTests || { echo '❌ Maven build failed'; exit 1; }",
-        "      snyk test || { echo '⚠️ Snyk test failed'; exit 1; }",
-        "      snyk fix || { echo '❌ Snyk fix failed'; exit 1; }",
-        "      mvn clean install -DskipTests || { echo '❌ Maven post-fix build failed'; exit 1; }",
-        "      for i in 1 2; do mvn clean install -DskipTests; snyk test; done",
-        "      echo '✅ Workflow completed. Use interactive buttons for PR creation if needed.'",
+        "      mvn clean install -DskipTests",
+        "      snyk test --json > snyk-report.json",
+        "      ghcp mcp snyk-autofix snyk-report.json",
+        "      git add .; git commit -m '🔧 Copilot fixes';",
+        "      mvn clean install -DskipTests",
+        "      for i in 1 2; do snyk test --json > snyk-report.json; ghcp mcp snyk-autofix snyk-report.json; mvn clean install -DskipTests; done",
         "      ;;",
         "",
-        "    *) echo '⚠️ Unknown mode $M'; ;;",
+        "    *) echo \"⚠️ Unknown mode $M\" ;;",
         "  esac",
         "done",
-        "",
-        "echo '✅ Workflow completed for selected modes!'"
+        "echo '✅ Workflow completed.'"
       ]
     }
   }
 }
 
-/springboot-snyk-fix.run
-repo_path=/Users/me/projects/my-repo
-base_branch=main
-new_branch=fix/snyk-2025-10
-pr_title="Fix: Snyk vulnerabilities"
-pr_body="PR with fixes applied"
-fix_mode=fix
-mode=snyk_test,snyk_fix,pr
-Runs Snyk scan first, then applies fixes, then post-fix Maven build, then creates PR
-
-2️ Full workflow in one go
-mode=all
-
-Separate individual steps
-mode=clone_build,snyk_test
 
 
-
-
-✅ What’s New in This Version
-
-IDE repo auto-detection — no need to type repo_path if project is open.
-
-Pre/post Maven builds around Snyk fix.
-
-Snyk fix/wizard + 2 regression iterations.
-
-Final fail-safe Snyk check.
-
-Interactive GHCP buttons for PR creation.
-
-Retry loop for push/PR with retry_count.
-
-Conflict detection — alerts developer if merge conflicts occur.
-
-Automatic base branch update to reduce conflicts.
-
-Multi-module Spring Boot compatible.
+/mcp run snyk_fix \
+  --mode snyk_fix \
+  --repo_path "" \
+  --branch "fix/snyk-issues" \
+  --base_branch "main"
